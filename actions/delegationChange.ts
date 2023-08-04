@@ -31,14 +31,13 @@ export const onDelegationEventEmitted: ActionFn = async (context: Context, event
 
 		// construct message
 		const message = isExistingDelegate ? `${isExistingDelegate.name}'s votes have changed. \n Previous balance: ${previousVotes} \n New balance: ${newVotes} \n Delta: ${delta}` : `A new delegate has emerged. ${eventLog.delegate} now has ${newVotes} votes.`
+		await postToSlack(message, context)
 		return
 
 	} catch (error) {
 		console.log({ error })
 		throw (error)
 	}
-
-	return "a thing"
 }
 
 const getDelegationEvent = (txEvent: TransactionEvent) => {
@@ -53,7 +52,10 @@ const getDelegationEvent = (txEvent: TransactionEvent) => {
 
 }
 
-
+const postToSlack = async (message: string, context: Context) => {
+	const url = await context.secrets.get("governanceAlertsChannelWebhook")
+	await axios.post(url, { "text": message }, { headers: { "Content-Type": "application/json" } })
+}
 
 type VoteChangedEvent = {
 	delegate: string;
